@@ -129,6 +129,17 @@ async function buildImage(pkg) {
 
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+  // ---- Headline sizing rule: never let it overflow the 1080px canvas ----
+  // Max usable width = 980px (40px margin each side). Arial Black caps run
+  // roughly 0.62x font-size per character (padding-adjusted). Cap size at
+  // 100px for short punchy headlines, shrink for longer ones, floor at 40px.
+  const MAX_HEADLINE_WIDTH = 980;
+  const CHAR_WIDTH_FACTOR = 0.62;
+  const headlineLen = Math.max(pkg.headline.length, 1);
+  let headlineFontSize = Math.floor(MAX_HEADLINE_WIDTH / (headlineLen * CHAR_WIDTH_FACTOR));
+  headlineFontSize = Math.min(100, Math.max(40, headlineFontSize));
+  const headlineStroke = Math.max(4, Math.round(headlineFontSize * 0.11));
+
   // Square 1:1 format per Appendix B (navy / American red / white / gold palette)
   const overlaySvg = `
 <svg width="1080" height="1080" xmlns="http://www.w3.org/2000/svg">
@@ -151,13 +162,15 @@ async function buildImage(pkg) {
   <!-- ========== HEADLINE ========== -->
   <text x="540" y="150"
         font-family="Arial Black, Impact, sans-serif"
-        font-size="90"
+        font-size="${headlineFontSize}"
         font-weight="900"
         fill="#FFFFFF"
         stroke="#B31942"
-        stroke-width="10"
+        stroke-width="${headlineStroke}"
         stroke-linejoin="round"
-        text-anchor="middle">
+        text-anchor="middle"
+        textLength="${Math.min(MAX_HEADLINE_WIDTH, headlineFontSize * headlineLen * CHAR_WIDTH_FACTOR)}"
+        lengthAdjust="spacingAndGlyphs">
     ${esc(pkg.headline)}
   </text>
 

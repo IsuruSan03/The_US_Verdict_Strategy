@@ -129,16 +129,21 @@ async function buildImage(pkg) {
 
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-  // ---- Headline sizing rule: never let it overflow the 1080px canvas ----
+  // ---- Headline sizing rule: big solid white text, no outline, never overflow ----
   // Max usable width = 980px (40px margin each side). Arial Black caps run
-  // roughly 0.62x font-size per character (padding-adjusted). Cap size at
-  // 100px for short punchy headlines, shrink for longer ones, floor at 40px.
+  // roughly 0.62x font-size per character. Cap size at 130px for short
+  // punchy headlines, shrink for longer ones, floor at 48px.
   const MAX_HEADLINE_WIDTH = 980;
   const CHAR_WIDTH_FACTOR = 0.62;
   const headlineLen = Math.max(pkg.headline.length, 1);
   let headlineFontSize = Math.floor(MAX_HEADLINE_WIDTH / (headlineLen * CHAR_WIDTH_FACTOR));
-  headlineFontSize = Math.min(100, Math.max(40, headlineFontSize));
-  const headlineStroke = Math.max(4, Math.round(headlineFontSize * 0.11));
+  headlineFontSize = Math.min(130, Math.max(48, headlineFontSize));
+
+  // ---- Poll bar sizing rule: big bottom text, scaled to never overflow ----
+  const MAX_POLL_WIDTH = 900;
+  const pollLen = Math.max(pkg.poll_question.length, 1);
+  let pollFontSize = Math.floor(MAX_POLL_WIDTH / (pollLen * 0.52));
+  pollFontSize = Math.min(52, Math.max(30, pollFontSize));
 
   // Square 1:1 format per Appendix B (navy / American red / white / gold palette)
   const overlaySvg = `
@@ -165,9 +170,6 @@ async function buildImage(pkg) {
         font-size="${headlineFontSize}"
         font-weight="900"
         fill="#FFFFFF"
-        stroke="#B31942"
-        stroke-width="${headlineStroke}"
-        stroke-linejoin="round"
         text-anchor="middle"
         textLength="${Math.min(MAX_HEADLINE_WIDTH, headlineFontSize * headlineLen * CHAR_WIDTH_FACTOR)}"
         lengthAdjust="spacingAndGlyphs">
@@ -175,32 +177,34 @@ async function buildImage(pkg) {
   </text>
 
   <!-- ========== BOTTOM POLL BAR ========== -->
-  <rect x="45" y="850" width="990" height="200" rx="30" ry="30" fill="#0A1F44" fill-opacity="0.96"/>
+  <rect x="45" y="820" width="990" height="230" rx="30" ry="30" fill="#0A1F44" fill-opacity="0.96"/>
 
-  <text x="540" y="920"
+  <text x="540" y="900"
         font-family="Arial, Helvetica, sans-serif"
-        font-size="36"
+        font-size="${pollFontSize}"
         font-weight="700"
         fill="#FFFFFF"
-        text-anchor="middle">
+        text-anchor="middle"
+        textLength="${Math.min(MAX_POLL_WIDTH, pollFontSize * pollLen * 0.52)}"
+        lengthAdjust="spacingAndGlyphs">
     ${esc(pkg.poll_question)}
   </text>
 
   <!-- YES -->
-  <circle cx="300" cy="990" r="36" fill="#2F6FED" stroke="#FFFFFF" stroke-width="4"/>
-  <text x="300" y="1004" font-size="38" text-anchor="middle" fill="#FFFFFF">👍</text>
-  <text x="365" y="1004"
+  <circle cx="290" cy="990" r="48" fill="#2F6FED" stroke="#FFFFFF" stroke-width="5"/>
+  <text x="290" y="1007" font-size="50" text-anchor="middle" fill="#FFFFFF">👍</text>
+  <text x="365" y="1008"
         font-family="Arial Black, Arial, sans-serif"
-        font-size="42"
+        font-size="56"
         font-weight="800"
         fill="#FFFFFF">YES</text>
 
   <!-- NO -->
-  <circle cx="700" cy="990" r="36" fill="#B31942" stroke="#FFFFFF" stroke-width="4"/>
-  <text x="700" y="1004" font-size="38" text-anchor="middle" fill="#FFFFFF">❤️</text>
-  <text x="765" y="1004"
+  <circle cx="710" cy="990" r="48" fill="#B31942" stroke="#FFFFFF" stroke-width="5"/>
+  <text x="710" y="1007" font-size="50" text-anchor="middle" fill="#FFFFFF">❤️</text>
+  <text x="785" y="1008"
         font-family="Arial Black, Arial, sans-serif"
-        font-size="42"
+        font-size="56"
         font-weight="800"
         fill="#FFFFFF">NO</text>
 </svg>`;
